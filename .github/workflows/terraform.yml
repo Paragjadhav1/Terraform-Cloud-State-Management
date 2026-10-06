@@ -1,6 +1,6 @@
-name: '🔨 Infrastructure Configuring using Terraform on AWS(Terraform Cloud Demo)' 
+name: '🔨 Infrastructure Configuring using Terraform on AWS(Terraform Cloud Demo)'
 
-on: 
+on:
   workflow_dispatch:
     inputs:
       action:
@@ -17,13 +17,13 @@ env:
   TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
   TF_WORKSPACE: ${{ secrets.TF_WORKSPACE }}
   TF_CLOUD_ORGANIZATION: ${{ secrets.TF_CLOUD_ORGANIZATION }}
+
 permissions:
   contents: read
 
-
 jobs:
   infrastructure-setup-using-terraform:
-    name: Terraform ${{ github.event.input.actions }}
+    name: Terraform ${{ github.event.inputs.action }}
     runs-on: ubuntu-24.04
     environment: production
 
@@ -40,8 +40,15 @@ jobs:
         with:
           terraform_version: "1.16.4"
           terraform_wrapper: true
-          cli_config_credentials_token: ${{ secrets. TF_API_TOKEN }}
-         
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
       - name: Cache Terraform
         uses: actions/cache@v4
         with:
@@ -51,7 +58,7 @@ jobs:
           key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf') }}
           restore-keys: |
             ${{ runner.os }}-terraform-
-          
+
       - name: Initialising the Terraform
         run: terraform init
 
@@ -69,6 +76,6 @@ jobs:
         if: ${{ github.event.inputs.action == 'apply' }}
         run: terraform apply -auto-approve
 
-      - name: Terraform destroy
+      - name: Terraform Destroy
         if: ${{ github.event.inputs.action == 'destroy' }}
         run: terraform destroy -auto-approve
